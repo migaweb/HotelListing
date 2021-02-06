@@ -11,6 +11,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using AutoMapper;
 using HotelListing.Configurations;
+using HotelListing.IRepository;
+using HotelListing.Repository;
 
 namespace HotelListing
 {
@@ -30,6 +32,9 @@ namespace HotelListing
         options.UseSqlServer(Configuration.GetConnectionString("sqlConnection"))
       );
 
+      // Transient, Always create a new IUnitOfWork
+      services.AddTransient<IUnitOfWork, UnitOfWork>();
+
       services.AddCors(corsOptions => {
         corsOptions.AddPolicy("CorsPolicyAllowAll", builder =>
           builder.AllowAnyOrigin()
@@ -44,7 +49,9 @@ namespace HotelListing
         c.SwaggerDoc("v1", new OpenApiInfo { Title = "HotelListing", Version = "v1" });
       });
 
-      services.AddControllers();
+      services.AddControllers().AddNewtonsoftJson(option => 
+      option.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+      );
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
