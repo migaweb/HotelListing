@@ -29,6 +29,7 @@ namespace HotelListing.Controllers
     }
 
     [HttpGet]
+    //[ResponseCache(CacheProfileName = "120SecondsDuration")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAll([FromQuery] RequestParams requestParams)
@@ -39,6 +40,7 @@ namespace HotelListing.Controllers
 
     //[Authorize]
     [HttpGet("{id:int}", Name = nameof(Get))]
+    //[ResponseCache(CacheProfileName = "120SecondsDuration")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]

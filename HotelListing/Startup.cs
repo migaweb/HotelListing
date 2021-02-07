@@ -34,6 +34,8 @@ namespace HotelListing
         options.UseSqlServer(Configuration.GetConnectionString("sqlConnection"))
       );
 
+      services.ConfigureHttpCacheHeaders();
+
       services.AddAuthentication();
       services.ConfigureIdentity();
       services.ConfigureJwt(Configuration);
@@ -51,7 +53,12 @@ namespace HotelListing
         c.SwaggerDoc("v1", new OpenApiInfo { Title = "HotelListing", Version = "v1" });
       });
 
-      services.AddControllers().AddNewtonsoftJson(option => 
+      services.AddControllers(config => {
+        // configures cache profile
+        config.CacheProfiles.Add("120SecondsDuration", new CacheProfile { 
+          Duration = 120
+        });
+      }).AddNewtonsoftJson(option => 
       option.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
       );
 
@@ -75,6 +82,8 @@ namespace HotelListing
 
       app.UseCors("CorsPolicyAllowAll");
 
+      app.UseResponseCaching();
+      app.UseHttpCacheHeaders();
       app.UseRouting();
 
       app.UseAuthentication();
