@@ -30,8 +30,8 @@ namespace HotelListing.Controllers
       _mapper = mapper;
     }
 
+    [ApiVersion("1.0", Deprecated = true)]
     [HttpGet]
-    
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetCountries([FromQuery] RequestParams requestParams)
