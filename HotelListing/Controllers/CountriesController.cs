@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
+using HotelListing.Data;
 using HotelListing.IRepository;
 using HotelListing.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -47,7 +49,7 @@ namespace HotelListing.Controllers
       }
     }
 
-    [HttpGet("{id:int}")]
+    [HttpGet("{id:int}", Name = nameof(GetCountry))]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -69,6 +71,104 @@ namespace HotelListing.Controllers
         _logger.LogError(ex, $"Something went wrong in the {nameof(GetCountry)}");
 
         return StatusCode(500, "Internal Server Error. Please try again later.");
+      }
+    }
+
+    [Authorize(Roles = "Administrator")]
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> CreateCountry([FromBody] CreateCountryDTO countryDTO)
+    {
+      if (!ModelState.IsValid)
+      {
+        _logger.LogError($"Invalid POST attempt in {nameof(CreateCountry)}");
+        return BadRequest(ModelState);
+      }
+
+      try
+      {
+        var country = _mapper.Map<Country>(countryDTO);
+        await _unitOfWork.Countries.Insert(country);
+        await _unitOfWork.Save();
+
+        return CreatedAtRoute(nameof(GetCountry), new { id = country.Id }, country);
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, $"Error in {nameof(CreateCountry)}.");
+        return StatusCode(500, "Something went wrong. Please try again later. ");
+
+      }
+    }
+
+    [Authorize(Roles = "Administrator")]
+    [HttpPut("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> UpdateCountry(int id, [FromBody] UpdateCountryDTO countryDTO)
+    {
+      if (!ModelState.IsValid || id < 1)
+      {
+        _logger.LogError($"Invalid PUT attempt in {nameof(UpdateCountry)}");
+        return BadRequest(ModelState);
+      }
+
+      try
+      {
+        var country = await _unitOfWork.Countries.Get(c => c.Id == id);
+        if (country == null)
+        {
+          return NotFound($"Country with the specified id {id} was not found.");
+        }
+
+        _mapper.Map(countryDTO, country);
+        _unitOfWork.Countries.Update(country);
+        await _unitOfWork.Save();
+
+        return NoContent();
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, $"Error in {nameof(UpdateCountry)}.");
+        return StatusCode(500, "Something went wrong. Please try again later. ");
+      }
+    }
+
+    [Authorize(Roles = "Administrator")]
+    [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> DeleteCountry(int id)
+    {
+      if (id < 1)
+      {
+        _logger.LogError($"Invalid DELETE attempt in {nameof(DeleteCountry)}");
+        return BadRequest("Submitted data is invalid.");
+      }
+
+      try
+      {
+        var country = await _unitOfWork.Countries.Get(h => h.Id == id);
+        if (country == null)
+        {
+          _logger.LogError($"Invalid DELETE attempt in {nameof(DeleteCountry)}");
+          return BadRequest("Submitted data is invalid.");
+        }
+
+        await _unitOfWork.Countries.Delete(id);
+        await _unitOfWork.Save();
+
+        return NoContent();
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, $"Error in {nameof(DeleteCountry)}.");
+        return StatusCode(500, "Something went wrong. Please try again later. ");
       }
     }
   }
